@@ -6,8 +6,9 @@ to make a reproducible scientific project named
 
 To (locally) reproduce this project, do the following:
 
-0. Download this code base. Notice that raw data are typically not included in the
-   git-history and may need to be downloaded independently.
+0. Download this code base. Notice that simulated data are not included in
+   in this repo and need to be downloaded independently from [here](https://doi.org/10.5281/zenodo.7096585). 
+   Unpack the archive in `data/sims` folder.
 1. Open a Julia console and do:
    ```
    julia> using Pkg
