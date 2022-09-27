@@ -1,0 +1,26 @@
+\documentclass[aspectratio=169,usenames,dvipsnames,8pt]{beamer}
+%Information to be included in the title page:
+\title{Plots browser for experimentname}
+\author{O. Soloviev}
+\institute{Supplementary material supnumber}
+\date{\today}
+\usepackage[T1]{fontenc}
+
+\hypersetup{
+	colorlinks=false,
+	linkcolor=blue,
+	filecolor=magenta,      
+	urlcolor=cyan,
+	pdftitle={supnumber plot browser},
+	pdfpagemode=FullScreen,
+}
+
+\graphicspath{{experimentname/}}
+\setkeys{Gin}{keepaspectratio,
+	width=\paperwidth,
+	height=\paperheight}
+
+\begin{document}
+	\setbeamertemplate{navigation symbols}{}
+	
+	\frame{\titlepage}

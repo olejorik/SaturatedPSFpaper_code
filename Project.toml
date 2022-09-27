@@ -9,6 +9,7 @@ FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+PhaseBases = "c4d961ba-0ec2-4b0f-a161-22c1127deb0e"
 PhaseRetrieval = "223879fc-9d59-4b08-8977-2bca214a0849"
 SampledDomains = "a82262f3-35bb-4fed-9e1b-5653a3e90076"
 
