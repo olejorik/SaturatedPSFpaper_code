@@ -1,4 +1,6 @@
-# SaturatedPSFpaper_code
+[![DOI](https://zenodo.org/badge/538920643.svg)](https://zenodo.org/badge/latestdoi/538920643)
+
+# Code supporting the "Saturated PSF paper" (to be published)
 
 This code base is using the Julia Language and [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project named
