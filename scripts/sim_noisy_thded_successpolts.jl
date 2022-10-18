@@ -1,20 +1,20 @@
 #  A template to process data for GSSat article
 
 # load all requirements
-include("ini.jl")
+include("../src/ini.jl")
 
 # Read files and read/update hardware config
 phasedir = "saturatedPSF"
 experimentname = "sim"
 supnumber = "4"
 
-figdir = plotsdir( experimentname)
+figdir = plotsdir(experimentname)
 
 simconfigs = [1] #, 2, 3]
 phasetypes = ["loworder"]#, "turbulent"]#, "sparse"] # , "ref"] # we don't need reference phase
 crops = [128]#,256] #, [128,256,512]
 satlevels = [0.95, 2, 4, 8, 16]
-noiselevels = [0,2,4]
+noiselevels = [0, 2, 4]
 
 params_input_data = Dict(
     :config => simconfigs,
@@ -47,7 +47,7 @@ preprocess_params_all = (
     # crop=((0, 0), (130, 126)),
     finalsize=128,
     threshold=[0, 2, 4, 8, 16],
-    sat_level=(255 -satoffset)/ 255,
+    sat_level=(255 - satoffset) / 255,
     low_level=0 / 255,
     downsample=1,
     offset=0,
@@ -97,7 +97,7 @@ for d in alldicts
     psfprocessed, _ = preprocesssingle(input_params, preprocess_params)
     d[:inputpsf] = psfprocessed
 
-    refphase =gt 
+    refphase = gt
     ap2, mask2 = apmask(
         hw, reverse(size(psfprocessed)); downsampling=d[:downsample], trim=0.1
     )
@@ -187,21 +187,21 @@ for d in alldicts
             dplot[:sat];
             refphase=refphase,
             resmask=mask2,
-            colormap=cm,
+            colormap=cm
         )
         Label(
             fig[0, :],
             makelabel(psfname, input_params, preprocess_params, PRparams);
-            textsize=12,
+            textsize=12
         )
-       
+
         plotname = savename(
             experimentname,
             dplot,
             "pdf";
-            ignores=(:resn, :resampn, :cropsim, :psfdir, :low_level, :offset, :sat_level),
+            ignores=(:resn, :resampn, :cropsim, :psfdir, :low_level, :offset, :sat_level)
         )
- 
+
         wsave(plotsdir(figdir, plotname), fig)
         push!(plotdicts, dplot)
     end
@@ -224,7 +224,7 @@ frametemplate(plotname, filename, navigator) = """
 decoratehiglight(s) = "\\colorbox{SpringGreen!20}{$s}"
 decorate(s) = "\\colorbox{Gray!20}{$s}"
 
-openstring = open(scriptsdir("browser_template_begin.txt")) do file
+openstring = open(srcdir("browser_template_begin.txt")) do file
     read(file, String)
 end
 
@@ -237,14 +237,14 @@ open(plotsdir(fname), "w") do f
 
     function plotname(d)
         return savename(
-            experimentname, d, "pdf"; 
-            ignores=(:resn, :resampn, :cropsim, :psfdir, :low_level, :offset, :sat_level),
+            experimentname, d, "pdf";
+            ignores=(:resn, :resampn, :cropsim, :psfdir, :low_level, :offset, :sat_level)
         )
     end
- 
-    merge!(sel_dict, Dict(:nrun =>collect(1:nruns)))
 
-    for d in plotdicts 
+    merge!(sel_dict, Dict(:nrun => collect(1:nruns)))
+
+    for d in plotdicts
         pname = plotname(d)
         filename = pname
         navigator = ""
@@ -267,8 +267,8 @@ open(plotsdir(fname), "w") do f
 end
 
 dn = dirname(fname)
-bn =basename(fname)
-curd=pwd()
+bn = basename(fname)
+curd = pwd()
 cd(dn)
 run(`lualatex.exe -synctex=1 -interaction=nonstopmode $bn`)
 # run(`latexmk -c`)
@@ -276,143 +276,33 @@ cd(curd)
 
 ## Making table of input psfs for fixed noise level, changing sat and threshold
 sel_dicts = dict_list(Dict(
-#     :phasetype => "loworder",
-#     :cropsim => 128,
-#     # :PRalg => preprocess_params_all[:PRalg],
-#     :beta => preprocess_params_all[:beta],
+    #     :phasetype => "loworder",
+    #     :cropsim => 128,
+    #     # :PRalg => preprocess_params_all[:PRalg],
+    #     :beta => preprocess_params_all[:beta],
     :N => params_input_data[:N],
 ))
 # sel_dicts = dict_list(delete!(copy(sel_dict),:nrun))
 
 # saving number of succesive runs in a dictionary of tables
 errdict = Dict()
+distdict = Dict()
 for sel_dict in sel_dicts
-errtable = zeros(length(preprocess_params_all[:threshold]), length(params_input_data[:sat]))
-disttable = zeros(
-    length(preprocess_params_all[:threshold]), length(params_input_data[:sat])
-)
+    errtable = zeros(length(preprocess_params_all[:threshold]), length(params_input_data[:sat]))
+    disttable = zeros(
+        length(preprocess_params_all[:threshold]), length(params_input_data[:sat])
+    )
 
-axlist = []
-fig = Figure(; resolution=(1000, 1000))
-# sel_plots = filter_dict_list(plotdicts, sel_dict)
-sel_plots = plotdicts
-for (j, sat) in enumerate(params_input_data[:sat])
-    for (i, threshold) in enumerate(preprocess_params_all[:threshold])
-        dallruns = filter_dict_list(sel_plots, Dict(:sat => sat, :threshold => threshold))
-        d = dallruns[1]
-        ax, img = image(
-            fig[i, j], rotr90(showpsf(d[:inputpsf], 5)); axis=(aspect=DataAspect(),)
-        )
-        hidedecorations!(ax)
-        if j == 1
-            Box(fig[i, 0]; color=:gray90)
-            Label(
-                fig[i, 0],
-                L"t=%$threshold";
-                tellheight=false,
-                rotation=pi / 2,
-                padding=(5, 5, 5, 5),
-            )
-        end
-        errtable[i, j] = length(filter(x -> x == 0, getindex.(dallruns, :resn))) #number of runs with zero residues
-        disttable[i, j] = minimum(last.(map(x -> disthist(x[:solhist]), dallruns))) #smallest distance
-    end
-    Box(fig[1, j, Top()]; color=:gray90)
-    Label(fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5))
-    colsize!(fig.layout, j, Aspect(1, 1.0))
-end
-colgap!(fig.layout, 5)
-rowgap!(fig.layout, 5)
-N = sel_dict[:N]
-Label(fig[0, :], "Noise level N = $N", textsize =30)
-resize_to_layout!(fig)
-display(fig)
-
-wsave(plotsdir(experimentname, "inputPSFtable-$N.pdf"), fig)
-
-# errdict[N] = errtable
-end
-
-## Making similar table for the ouptut PSF
-
-for sel_dict in sel_dicts
-axlist = []
-fig = Figure(; resolution=(1000, 1000))
-# sel_plots = filter_dict_list(plotdicts, sel_dict)
-sel_plots = plotdicts
-for (j, sat) in enumerate(params_input_data[:sat])
-    for (i, threshold) in enumerate(preprocess_params_all[:threshold])
-        dallruns = filter_dict_list(sel_plots, Dict(:sat => sat, :threshold => threshold))
-        d = sort(dallruns; by=x -> getindex(x, :resn))[1]
-        d = sort(dallruns; by=x -> last(disthist(x[:solhist])))[1]
-        ax, img = image(
-            fig[i, j], rotr90(showpsf(d[:restoredpsf], 5)); axis=(aspect=DataAspect(),)
-        )
-        hidedecorations!(ax)
-        if j == 1
-            Box(fig[i, 0]; color=:gray90)
-            Label(
-                fig[i, 0],
-                L"t=%$threshold";
-                tellheight=false,
-                rotation=pi / 2,
-                padding=(5, 5, 5, 5),
-            )
-        end
-    end
-    Box(fig[1, j, Top()]; color=:gray90)
-    Label(fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5))
-    colsize!(fig.layout, j, Aspect(1, 1.0))
-end
-colgap!(fig.layout, 5)
-rowgap!(fig.layout, 5)
-N = sel_dict[:N]
-Label(fig[0, :], "Noise level N = $N", textsize =30)
-resize_to_layout!(fig)
-display(fig)
-
-wsave(plotsdir( experimentname, "restoredPSFtable-$N.pdf"), fig)
-end
-
-## Making similar table for the ouptut phase
-
-refphase = angle.(ifftshift(solution(plotdicts[121][:solhist]))) # fix it later to chose automatically
-let (mask, mask2) = (nothing, nothing)
-    for sel_dict in sel_dicts
     axlist = []
     fig = Figure(; resolution=(1000, 1000))
-    # sel_plots = filter_dict_list(plotdicts, sel_dict)
-    sel_plots = plotdicts
+    sel_plots = filter_dict_list(plotdicts, sel_dict)
     for (j, sat) in enumerate(params_input_data[:sat])
         for (i, threshold) in enumerate(preprocess_params_all[:threshold])
-            dallruns = filter_dict_list(
-                sel_plots, Dict(:sat => sat, :threshold => threshold)
+            dallruns = filter_dict_list(sel_plots, Dict(:sat => sat, :threshold => threshold))
+            d = dallruns[1]
+            ax, img = image(
+                fig[i, j], rotr90(showpsf(d[:inputpsf], 5)); axis=(aspect=DataAspect(),)
             )
-            d = sort(dallruns; by=x -> getindex(x, :resn))[1]
-            d = sort(dallruns; by=x -> last(disthist(x[:solhist])))[1]
-
-            if isnothing(mask)
-                ap, mask = apmask(
-                    params_input_data[:hw], d[:finalsize]; downsampling=d[:downsample]
-                )
-                _, mask2 = apmask(
-                    params_input_data[:hw],
-                    d[:finalsize];
-                    downsampling=d[:downsample],
-                    trim=2,
-                )
-                mask2 .*= (-.1 .< refphase .< 1)
-            end
-            phi =
-                select_twin(angle.(ifftshift(solution(d[:solhist]))), refphase, mask2) .*
-                mask
-            # phidiff, phierr = calculate_phi_err(solution(sol), refphase, mask)
-            ax, img = showphasetight(
-                bboxview(removepiston(removetiptilt(phi, mask2), mask2), mask, 2),
-                fig[i, j];
-                hidedec=false,
-            )
-
             hidedecorations!(ax)
             if j == 1
                 Box(fig[i, 0]; color=:gray90)
@@ -421,146 +311,255 @@ let (mask, mask2) = (nothing, nothing)
                     L"t=%$threshold";
                     tellheight=false,
                     rotation=pi / 2,
-                    padding=(5, 5, 5, 5),
+                    padding=(5, 5, 5, 5)
                 )
             end
+            errtable[i, j] = length(filter(x -> x == 0, getindex.(dallruns, :resn))) #number of runs with zero residues
+            disttable[i, j] = minimum(last.(map(x -> distgthist(x[:solhist]), dallruns))) #smallest distance
         end
         Box(fig[1, j, Top()]; color=:gray90)
-        Label(
-            fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5)
-        )
+        Label(fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5))
         colsize!(fig.layout, j, Aspect(1, 1.0))
     end
     colgap!(fig.layout, 5)
     rowgap!(fig.layout, 5)
     N = sel_dict[:N]
-    Label(fig[0, :], "Noise level N = $N", textsize =30)
+    Label(fig[0, :], "Input PSF, noise level N = $N", textsize=30)
     resize_to_layout!(fig)
     display(fig)
 
-    wsave(plotsdir( experimentname, "restoredphasetable-$N.pdf"), fig)
+    wsave(plotsdir(experimentname, "inputPSFtable-$N.pdf"), fig)
+
+    errdict[N] = errtable
+    distdict[N] = disttable
+end
+
+## Making similar table for the output PSF
+
+for sel_dict in sel_dicts
+    axlist = []
+    fig = Figure(; resolution=(1000, 1000))
+    sel_plots = filter_dict_list(plotdicts, sel_dict)
+    for (j, sat) in enumerate(params_input_data[:sat])
+        for (i, threshold) in enumerate(preprocess_params_all[:threshold])
+            dallruns = filter_dict_list(sel_plots, Dict(:sat => sat, :threshold => threshold))
+            d = sort(dallruns; by=x -> getindex(x, :resn))[1]
+            d = sort(dallruns; by=x -> last(disthist(x[:solhist])))[1]
+            ax, img = image(
+                fig[i, j], rotr90(showpsf(d[:restoredpsf], 5)); axis=(aspect=DataAspect(),)
+            )
+            hidedecorations!(ax)
+            if j == 1
+                Box(fig[i, 0]; color=:gray90)
+                Label(
+                    fig[i, 0],
+                    L"t=%$threshold";
+                    tellheight=false,
+                    rotation=pi / 2,
+                    padding=(5, 5, 5, 5)
+                )
+            end
+        end
+        Box(fig[1, j, Top()]; color=:gray90)
+        Label(fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5))
+        colsize!(fig.layout, j, Aspect(1, 1.0))
+    end
+    colgap!(fig.layout, 5)
+    rowgap!(fig.layout, 5)
+    N = sel_dict[:N]
+    Label(fig[0, :], "Restored PSF, noise level N = $N", textsize=30)
+    resize_to_layout!(fig)
+    display(fig)
+
+    wsave(plotsdir(experimentname, "restoredPSFtable-$N.pdf"), fig)
+end
+
+## Making similar table for the ouptut phase
+
+refphase = angle.(ifftshift(solution(plotdicts[121][:solhist]))) # fix it later to chose automatically
+let (mask, mask2) = (nothing, nothing)
+    for sel_dict in sel_dicts
+        axlist = []
+        fig = Figure(; resolution=(1000, 1000))
+        sel_plots = filter_dict_list(plotdicts, sel_dict)
+        for (j, sat) in enumerate(params_input_data[:sat])
+            for (i, threshold) in enumerate(preprocess_params_all[:threshold])
+                dallruns = filter_dict_list(
+                    sel_plots, Dict(:sat => sat, :threshold => threshold)
+                )
+                d = sort(dallruns; by=x -> getindex(x, :resn))[1]
+                d = sort(dallruns; by=x -> last(disthist(x[:solhist])))[1]
+
+                if isnothing(mask)
+                    ap, mask = apmask(
+                        params_input_data[:hw], d[:finalsize]; downsampling=d[:downsample]
+                    )
+                    _, mask2 = apmask(
+                        params_input_data[:hw],
+                        d[:finalsize];
+                        downsampling=d[:downsample],
+                        trim=2
+                    )
+                    mask2 .*= (-0.1 .< refphase .< 1)
+                end
+                phi =
+                    select_twin(angle.(ifftshift(solution(d[:solhist]))), refphase, mask2) .*
+                    mask
+                # phidiff, phierr = calculate_phi_err(solution(sol), refphase, mask)
+                ax, img = showphasetight(
+                    bboxview(removepiston(removetiptilt(phi, mask2), mask2), mask, 2),
+                    fig[i, j];
+                    hidedec=false
+                )
+
+                hidedecorations!(ax)
+                if j == 1
+                    Box(fig[i, 0]; color=:gray90)
+                    Label(
+                        fig[i, 0],
+                        L"t=%$threshold";
+                        tellheight=false,
+                        rotation=pi / 2,
+                        padding=(5, 5, 5, 5)
+                    )
+                end
+            end
+            Box(fig[1, j, Top()]; color=:gray90)
+            Label(
+                fig[1, j, Top()], L"s=%$sat"; tellwidth=false, rotation=0, padding=(5, 5, 5, 5)
+            )
+            colsize!(fig.layout, j, Aspect(1, 1.0))
+        end
+        colgap!(fig.layout, 5)
+        rowgap!(fig.layout, 5)
+        N = sel_dict[:N]
+        Label(fig[0, :], "Restored phase, noise level N = $N", textsize=30)
+        resize_to_layout!(fig)
+        display(fig)
+
+        wsave(plotsdir(experimentname, "restoredphasetable-$N.pdf"), fig)
     end
 end
 
 ## Making similar table for the gt error
 
 for sel_dict in sel_dicts
-N = sel_dict[:N]
+    N = sel_dict[:N]
 
-# vals= errdict[N]
-vals = Int.(errtable)
-vals = disttable
-fig = Figure()
-cmin, cmax = extrema(vals)
-# cmin, cmax = (0, 0.75)
-# chigh = :red
-cscheme = ColorSchemes.isoluminant_cgo_70_c39_n256
-cscheme = reverse(ColorSchemes.diverging_rainbow_bgymr_45_85_c67_n256)
-cscheme = reverse(ColorSchemes.RdYlGn_10)
+    # vals= errdict[N]
+    # vals = Int.(errtable)
+    vals = distdict[N]
+    fig = Figure()
+    cmin, cmax = extrema(vals)
+    # cmin, cmax = (0, 0.75)
+    # chigh = :red
+    cscheme = ColorSchemes.isoluminant_cgo_70_c39_n256
+    cscheme = reverse(ColorSchemes.diverging_rainbow_bgymr_45_85_c67_n256)
+    cscheme = reverse(ColorSchemes.RdYlGn_10)
 
-for (j, sat) in enumerate(params_input_data[:sat])
-    for (i, threshold) in enumerate(preprocess_params_all[:threshold])
-        v = vals[i, j]
-        c = v > cmax ? chigh : get.(Ref(cscheme), (v - cmin) / (cmax - cmin))
-        Box(fig[i, j]; color=c, width=150, height=150)
-        Label(fig[i, j], "$(round(v, digits=3))"; textsize=30)
-        if j == 1
-            Box(fig[i, 1, Left()]; color=:gray90, padding=(5, 5, 5, 5))
-            Label(
-                fig[i, 1, Left()],
-                L"t=%$threshold";
-                tellheight=false,
-                rotation=pi / 2,
-                padding=(5, 5, 5, 5),
-            )
-        end
-        if i == 1
-            Box(fig[1, j, Top()]; color=:gray90)
-            Label(
-                fig[1, j, Top()],
-                L"s=%$sat";
-                tellwidth=false,
-                rotation=0,
-                padding=(5, 5, 5, 5),
-            )
+    for (j, sat) in enumerate(params_input_data[:sat])
+        for (i, threshold) in enumerate(preprocess_params_all[:threshold])
+            v = vals[i, j]
+            c = v > cmax ? chigh : get.(Ref(cscheme), (v - cmin) / (cmax - cmin))
+            Box(fig[i, j]; color=c, width=150, height=150)
+            Label(fig[i, j], "$(round(v, digits=3))"; textsize=30)
+            if j == 1
+                Box(fig[i, 1, Left()]; color=:gray90, padding=(5, 5, 5, 5))
+                Label(
+                    fig[i, 1, Left()],
+                    L"t=%$threshold";
+                    tellheight=false,
+                    rotation=pi / 2,
+                    padding=(5, 5, 5, 5)
+                )
+            end
+            if i == 1
+                Box(fig[1, j, Top()]; color=:gray90)
+                Label(
+                    fig[1, j, Top()],
+                    L"s=%$sat";
+                    tellwidth=false,
+                    rotation=0,
+                    padding=(5, 5, 5, 5)
+                )
+            end
         end
     end
-end
-Label(fig[-1, :], "Noise level N = $N", textsize =30)
-Colorbar(
-    fig[end + 1, :];
-    limits=(cmin, cmax),
-    colormap=cscheme,
-    vertical=false,
-    flipaxis=false,
-    # highclip = :red,
-    # width = 150, height = 150
-)
-rowgap!(fig.layout, 5)
-colgap!(fig.layout, 5)
-resize_to_layout!(fig)
-display(fig)
-wsave(plotsdir( experimentname, "successruns--$N.pdf"), fig)
+    Label(fig[-1, :], "Phase error, noise level N = $N", textsize=30)
+    Colorbar(
+        fig[end+1, :];
+        limits=(cmin, cmax),
+        colormap=cscheme,
+        vertical=false,
+        flipaxis=false
+        # highclip = :red,
+        # width = 150, height = 150
+    )
+    rowgap!(fig.layout, 5)
+    colgap!(fig.layout, 5)
+    resize_to_layout!(fig)
+    display(fig)
+    wsave(plotsdir(experimentname, "successruns-$N.pdf"), fig)
 end
 
-## Making similar table for the snumber of residuals
+## Making similar table for the number of residuals
 
 for sel_dict in sel_dicts
-N = sel_dict[:N]
+    N = sel_dict[:N]
 
-# vals= errdict[N]
-vals = Int.(errtable)
-# vals= disttable
-fig = Figure()
-cmin, cmax = extrema(vals)
-# cmin, cmax = (0, 0.75)
-# chigh = :red
-cscheme = ColorSchemes.isoluminant_cgo_70_c39_n256
-cscheme = reverse(ColorSchemes.diverging_rainbow_bgymr_45_85_c67_n256)
-cscheme = ColorSchemes.RdYlGn_10
+    vals= Int.(errdict[N])
+    # vals = Int.(errtable)
+    # vals= disttable
+    fig = Figure()
+    cmin, cmax = extrema(vals)
+    # cmin, cmax = (0, 0.75)
+    # chigh = :red
+    cscheme = ColorSchemes.isoluminant_cgo_70_c39_n256
+    cscheme = reverse(ColorSchemes.diverging_rainbow_bgymr_45_85_c67_n256)
+    cscheme = ColorSchemes.RdYlGn_10
 
-for (j, sat) in enumerate(params_input_data[:sat])
-    for (i, threshold) in enumerate(preprocess_params_all[:threshold])
-        v = vals[i, j]
-        c = v > cmax ? chigh : get.(Ref(cscheme), (v - cmin) / (cmax - cmin))
-        Box(fig[i, j]; color=c, width=150, height=150)
-        # Label(fig[i,j,], "$(round(v, digits=3))", textsize =30) 
-        Label(fig[i, j], "$v"; textsize=30)
-        if j == 1
-            Box(fig[i, 1, Left()]; color=:gray90, padding=(5, 5, 5, 5))
-            Label(
-                fig[i, 1, Left()],
-                L"t=%$threshold";
-                tellheight=false,
-                rotation=pi / 2,
-                padding=(5, 5, 5, 5),
-            )
-        end
-        if i == 1
-            Box(fig[1, j, Top()]; color=:gray90)
-            Label(
-                fig[1, j, Top()],
-                L"s=%$sat";
-                tellwidth=false,
-                rotation=0,
-                padding=(5, 5, 5, 5),
-            )
+    for (j, sat) in enumerate(params_input_data[:sat])
+        for (i, threshold) in enumerate(preprocess_params_all[:threshold])
+            v = vals[i, j]
+            c = v > cmax ? chigh : get.(Ref(cscheme), (v - cmin) / (cmax - cmin))
+            Box(fig[i, j]; color=c, width=150, height=150)
+            # Label(fig[i,j,], "$(round(v, digits=3))", textsize =30) 
+            Label(fig[i, j], "$v"; textsize=30)
+            if j == 1
+                Box(fig[i, 1, Left()]; color=:gray90, padding=(5, 5, 5, 5))
+                Label(
+                    fig[i, 1, Left()],
+                    L"t=%$threshold";
+                    tellheight=false,
+                    rotation=pi / 2,
+                    padding=(5, 5, 5, 5)
+                )
+            end
+            if i == 1
+                Box(fig[1, j, Top()]; color=:gray90)
+                Label(
+                    fig[1, j, Top()],
+                    L"s=%$sat";
+                    tellwidth=false,
+                    rotation=0,
+                    padding=(5, 5, 5, 5)
+                )
+            end
         end
     end
-end
-Label(fig[-1, :], "Noise level N = $N", textsize =30)
-Colorbar(
-    fig[end + 1, :];
-    limits=(cmin, cmax),
-    colormap=cscheme,
-    vertical=false,
-    flipaxis=false,
-    # highclip = :red,
-    # width = 150, height = 150
-)
-rowgap!(fig.layout, 5)
-colgap!(fig.layout, 5)
-resize_to_layout!(fig)
-display(fig)
-wsave(plotsdir( experimentname, "ressuccessruns-$N.pdf"), fig)
+    Label(fig[-1, :], "Number of successful runs, noise level N = $N", textsize=30)
+    Colorbar(
+        fig[end+1, :];
+        limits=(cmin, cmax),
+        colormap=cscheme,
+        vertical=false,
+        flipaxis=false
+        # highclip = :red,
+        # width = 150, height = 150
+    )
+    rowgap!(fig.layout, 5)
+    colgap!(fig.layout, 5)
+    resize_to_layout!(fig)
+    display(fig)
+    wsave(plotsdir(experimentname, "ressuccessruns-$N.pdf"), fig)
 end

@@ -1,7 +1,7 @@
-#  A template to process data for GSSat article
+# Test of the method on experimental data 
 
 # load all requirements
-include("ini.jl")
+include("../src/ini.jl")
 
 # Read files and read/update hardware config
 phasedir = ""
@@ -119,12 +119,6 @@ for d in alldicts
     checkpoint = 150
     PRparams = (
         PRalg = PRalg,
-        # PRalg = "GS",
-        # PRalg = "GSSup",
-        # PRalg = "GSSupNormed",
-        # PRalg = "GSSatSN",
-        # PRalg="GSSat",
-        # PRalg = "GSClipped",
         apalg="DRAP",
         iterparams=(iternum=checkpoint, 
         # snapshots=[-2, -1, 0] .+ checkpoint, 
