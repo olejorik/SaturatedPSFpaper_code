@@ -26,7 +26,7 @@ To (locally) reproduce this project, do the following:
 **Warning:** the packages need to be precompiled on the first run, this can take quite a long time.
 
 ## TOC
-The scripts in the `scripts` folder produce the plots used in Section 5 of the article and the source files for the supplementary "result browsers". If lualatex is installed in the system, scripts also compile the pdf files from the /tex sources. The plots are save in the `plots` folder.
+The scripts in the `scripts` folder produce the plots used in Section 5 of the article and the source files for the supplementary "result browsers". If lualatex is installed in the system, scripts also compile the pdf files from the .tex sources. The plots are saved in the `plots` folder.
 
 - `SimulatedData_full.jl` uses the simulated data to produce the plots for the whole parameter space, resulting in 3360-page result browser.  This takes about 2.5 hours.
 - `sim_noisy_thded_successpolts.jl` and `simT_noisy_thded_successpolts.jl` use the simulated data (for the "low-order" and "turbulent" phases respectively) in the reduced parameter space, with 10 runs with random initial value for each parameter set and generate also the result tables shown in Section 5.
