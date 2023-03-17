@@ -163,7 +163,7 @@ for d in alldicts
 
         cm = satpaletteTwoBand(dplot[:sat]; offset = satoffset, nsteps = 256)
         fig = plot_resultsNoGT(sol, ap, mask, dplot[:inputpsf], dplot[:sat]; refphase =refphase, resmask = mask2,colormap = cm)
-        Label(fig[0, :], makelabel(psfname, input_params, preprocess_params, PRparams), textsize=12)
+        Label(fig[0, :], makelabel(psfname, input_params, preprocess_params, PRparams), fontsize=12)
         # fig |> display
 
 
@@ -192,7 +192,7 @@ frametemplate(plotname, filename, navigator) = """
 decoratehiglight(s) = "\\colorbox{SpringGreen!20}{$s}"
 decorate(s) = "\\colorbox{Gray!20}{$s}"
 
-openstring = open(scriptsdir("browser_template_begin.txt")) do file
+openstring = open(srcdir("browser_template_begin.txt")) do file
     read(file, String)
 end
 
@@ -283,7 +283,7 @@ errdict = Dict()
     colgap!(fig.layout,5)
     rowgap!(fig.layout, 5)
     # N = sel_dict[:N]
-    # Label(fig[0, :], "Noise level N = $N", textsize =30)
+    # Label(fig[0, :], "Noise level N = $N", fontsize =30)
     resize_to_layout!(fig)
     display(fig)
 
@@ -321,7 +321,7 @@ errdict = Dict()
     colgap!(fig.layout,5)
     rowgap!(fig.layout, 5)
     # N = sel_dict[:N]
-    # Label(fig[0, :], "Noise level N = $N", textsize =30)
+    # Label(fig[0, :], "Noise level N = $N", fontsize =30)
     resize_to_layout!(fig)
     display(fig)
 
@@ -364,7 +364,7 @@ let (mask, mask2) = (nothing, nothing)
     colgap!(fig.layout,5)
     rowgap!(fig.layout, 5)
     # N = sel_dict[:N]
-    # Label(fig[0, :], "Noise level N = $N", textsize =30)
+    # Label(fig[0, :], "Noise level N = $N", fontsize =30)
     resize_to_layout!(fig)
     display(fig)
 
@@ -393,7 +393,7 @@ end
             v= vals[i,j]
             c = v>cmax ? chigh : get.(Ref(cscheme), (v-cmin)/(cmax-cmin))
             Box(fig[i,j], color = c,width = 150, height = 150)
-            Label(fig[i,j,], "$(round(v, digits=3))", textsize =30) 
+            Label(fig[i,j,], "$(round(v, digits=3))", fontsize =30) 
             if j ==1
                 Box(fig[i, 1, Left()], color = :gray90,padding =(5,5,5,5))
                 Label(
@@ -410,7 +410,7 @@ end
             end
         end
     end
-    # Label(fig[-1, :], "Noise level N = $N", textsize =30)
+    # Label(fig[-1, :], "Noise level N = $N", fontsize =30)
     Colorbar(fig[end+1,:],limits = (cmin,cmax), colormap = cscheme, 
         vertical = false,  flipaxis = false,
         # highclip = :red,
@@ -447,8 +447,8 @@ end
             v= vals[i,j]
             c = v>cmax ? chigh : get.(Ref(cscheme), (v-cmin)/(cmax-cmin))
             Box(fig[i,j], color = c,width = 150, height = 150)
-            # Label(fig[i,j,], "$(round(v, digits=3))", textsize =30) 
-            Label(fig[i,j,], "$v", textsize =30) 
+            # Label(fig[i,j,], "$(round(v, digits=3))", fontsize =30) 
+            Label(fig[i,j,], "$v", fontsize =30) 
             if j ==1
                 Box(fig[i, 1, Left()], color = :gray90,padding =(5,5,5,5))
                 Label(
@@ -465,7 +465,7 @@ end
             end
         end
     end
-    # Label(fig[-1, :], "Noise level N = $N", textsize =30)
+    # Label(fig[-1, :], "Noise level N = $N", fontsize =30)
     Colorbar(fig[end+1,:],limits = (cmin,cmax), colormap = cscheme, 
         vertical = false,  flipaxis = false,
         # highclip = :red,
