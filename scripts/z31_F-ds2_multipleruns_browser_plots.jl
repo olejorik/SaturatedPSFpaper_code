@@ -232,13 +232,16 @@ open(plotsdir(fname), "w") do f
 
 end
 
-dn = dirname(fname)
-bn =basename(fname)
-curd=pwd()
-cd(dn)
-run(`lualatex.exe -synctex=1 -interaction=nonstopmode $bn`)
-# run(`latexmk -c`)
-cd(curd)
+lualatexcmd = Sys.which("lualatex")
+if !isnothing(lualatexcmd)
+    dn = dirname(fname)
+    bn =basename(fname)
+    curd=pwd()
+    cd(dn)
+    run(`$lualatexcmd -synctex=1 -interaction=nonstopmode $bn`)
+    # run(`latexmk -c`)
+    cd(curd)
+end
 
 ## Making table of input psfs for fixed phase type and nooise level, changing sat and threshold
 # sel_dicts = dict_list(Dict(
