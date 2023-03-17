@@ -1,5 +1,5 @@
 using DrWatson
-@quickactivate "Phase"
+@quickactivate "SaturatedPSFpaper_code"
 
 # using PhaseBases
 using PhaseRetrieval
