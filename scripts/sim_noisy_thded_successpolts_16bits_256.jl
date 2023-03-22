@@ -5,14 +5,14 @@ include("../src/ini.jl")
 
 # Read files and read/update hardware config
 phasedir = "saturatedPSF"
-experimentname = "sim"
-supnumber = "6"
+experimentname = "sim_low_256"
+supnumber = "7"
 
 figdir = plotsdir(experimentname)
 
 simconfigs = [1] #, 2, 3]
 phasetypes = ["loworder"]#, "turbulent"]#, "sparse"] # , "ref"] # we don't need reference phase
-crops = [128]#,256] #, [128,256,512]
+crops = [256]#,256] #, [128,256,512]
 satlevels = [0.95, 2, 4, 8, 16]
 noiselevels = [0, 2, 4]
 bpps = [8, 12, 16]
@@ -48,7 +48,7 @@ const satoffset = 0
 preprocess_params_all = (
     # pad=((0, 0), (0, 0)),
     # crop=((0, 0), (130, 126)),
-    finalsize=128,
+    finalsize=256,
     threshold=[0, 2, 4, 8, 16],
     sat_level=(255 - satoffset) / 255,
     low_level=0 / 255,
