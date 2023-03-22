@@ -745,11 +745,11 @@ function loop(iter)
     return x
 end
 
-function read_sim_data(d::Dict)
-    @unpack config, phasetype, cropsim, sat, N = d
+function read_sim_data(d::Dict; ext = "png")
+    @unpack config, phasetype, cropsim, sat, N, bpp = d
     crop = cropsim
-    dload = @dict(config, phasetype, crop, sat, N)
-    psfshortnname = savename("PSF", dload, "png")
+    dload = @dict(config, phasetype, crop, sat, N, bpp)
+    psfshortnname = savename("PSF", dload, ext)
     psfname = datadir("sims", phasedir, "psfs", psfshortnname)
     psfimage = load(psfname)
 
