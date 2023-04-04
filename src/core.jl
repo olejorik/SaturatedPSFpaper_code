@@ -760,7 +760,7 @@ function read_sim_data(d::Dict; ext = "png")
     return psfshortnname, psfimage, ap, phase
 end
 
-function read_exp_data(d::Dict)
+function read_exp_data(d::Dict, phasedir = phasedir)
     @unpack sat, psfnamefunc = d
 
     psfshortnname = psfnamefunc(sat)
