@@ -4,27 +4,29 @@
 include("../src/ini.jl")
 
 exppar = Dict(
-    :num => [3,4],
-    :av => [1,4,16,64], 
-    :DRAPlength => [250, 500]
+    :num => [5,6], #[1,10],
+    :av => [1,16], #[1,16], 
+    :DRAPlength => [150, 50],
+    :expnum => 9, 
+    :folder => "2023-04-20"
 )
 
 function run_exp(d)
-    @unpack num, av, DRAPlength = d
+    @unpack num, av, DRAPlength, expnum, folder = d
     @info "num = $num, av = $av"
 
     # Read files and read/update hardware config
-    phasedir = "2023-03-31/$num"
+    phasedir = "$folder/$num"
     # experimentname = "data220121-z31-d1"
-    experimentname = "12bit-exp6-$num-$av-$DRAPlength"
-    supnumber = "exp6-$num-$av"
+    experimentname = "8bit_noglass-$expnum-$num-$av-$DRAPlength"
+    supnumber = "$expnum-$num-$av"
 
     figdir = plotsdir(experimentname)
 
     # simconfigs = [1] #, 2, 3]
     # phasetypes = ["loworder", "turbulent"]#, "sparse"] # , "ref"] # we don't need reference phase
     crops = [256]#,128] #, [128,256,512]
-    satlevels = [1, 2, 4, 8, 16]#, 32]
+    satlevels = [1, 2, 3, 4, 8, 16]#, 32]
     # noiselevels = [0, 2, 4]
     ds = 1
 
@@ -34,9 +36,9 @@ function run_exp(d)
         :cropsim => crops,
         :sat => satlevels,
         # :N => noiselevels,
-        :psfdir => "2023-03-31/$num",
+        :psfdir => "$folder/$num",
         :psfnamefunc => (sat->"PSF_av=$(av)_sat=$sat.tif"),
-        :hw => hwConfig("UI3860", 300, 633e-6, 35)
+        :hw => hwConfig("UI1540", 300, 633e-6, 15)
     )
     nruns = 10
 
@@ -98,15 +100,19 @@ function run_exp(d)
 
         @unpack hw = d
         
-        if hw.cam.channelbitdepth == 16
-            if hw.cam.bitdepth == 12
-                psfimage = reinterpret(Gray{N4f12}, psfimage)
-            elseif hw.cam.bitdepth == 10
-                psfimage = reinterpret(Gray{N6f10}, psfimage)
-            elseif hw.cam.bitdepth == 14
-                psfimage = reinterpret(Gray{N2f14}, psfimage)
-            end
-        end
+        # if hw.cam.channelbitdepth == 16
+        #     if hw.cam.bitdepth == 12
+        #         psfimage = reinterpret(Gray{N4f12}, psfimage)
+        #     elseif hw.cam.bitdepth == 10
+        #         psfimage = reinterpret(Gray{N6f10}, psfimage)
+        #     elseif hw.cam.bitdepth == 14
+        #         psfimage = reinterpret(Gray{N2f14}, psfimage)
+        #     end
+        # end
+
+        # We have averaged image
+        psfimage = reinterpret(Gray{N8f8}, psfimage)
+
         
         # display(psfimage)
         # display(highlightsaturation(showpsf(psfimage, 5)))
@@ -156,7 +162,7 @@ function run_exp(d)
             # inimethod="data",
             ϕscale=2π,
             appolish=true,
-            polishlength=1000,
+            polishlength=50,
             processblur=false,
             blurparam=BlurPhaseparam(blurwidth=5, maxit=1)
         )
@@ -396,6 +402,9 @@ function run_exp(d)
     #     vals= disttable
     #     fig = Figure()
     #     cmin, cmax = extrema(vals)
+    #     if cmax-cmin ≈ 0
+    #         cmin = cmax/2
+    #     end
     #     # cmin, cmax = (0, 0.75)
     #     # chigh = :red
     #     cscheme = ColorSchemes.isoluminant_cgo_70_c39_n256
