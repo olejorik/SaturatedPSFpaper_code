@@ -93,7 +93,17 @@ function preprocesssingle(input_params, preprocess_params)
     processed = Float64.(deepcopy(psfimage))
     # @info typeof(processed)
 
-    processed .-= (preprocess_params.offset / (2^hw.cam.bitdepth))
+    # get the offset or use bgmean if present
+    if :bgmean ∈ keys(preprocess_params)
+        offset = preprocess_params.bgmean[Symbol("s$(preprocess_params.sat)")]
+        @info "Using offset from bg image $offset"
+    else
+        offset = preprocess_params.offset
+        @info "Using predefined offset $offset"
+    end
+
+
+    processed .-= (offset / (2^hw.cam.bitdepth))
     hardthreshold!(processed, 0) #subtract offset and make all negative zero
     hardthreshold!(processed, preprocess_params.threshold / (2^hw.cam.bitdepth))
 
@@ -205,7 +215,7 @@ function makeprproblems(input_params, preprocess_params, PRparams)
         elseif alg == "GSSatF"
             sat = A .< sqrt(params.sat_level)
             @info "making saturated set"
-            @info "extremsa of A $(extrema(A))"
+            @info "extrema of A $(extrema(A))"
             @info "using sat level $(params.sat_level)"
             A = A ./ N .* n
             A ./= params.sat_level
@@ -216,7 +226,7 @@ function makeprproblems(input_params, preprocess_params, PRparams)
         elseif alg == "GSSatP"
             sat = A .< sqrt(params.sat_level)
             @info "making saturated set"
-            @info "extremsa of A $(extrema(A))"
+            @info "extrema of A $(extrema(A))"
             @info "using sat level $(params.sat_level)"
             A = A ./ N .* n
             A ./= params.sat_level
@@ -227,7 +237,7 @@ function makeprproblems(input_params, preprocess_params, PRparams)
         elseif alg == "GSClipped"
             A = A ./ N .* n
             @info "making clipped set"
-            @info "extremsa of A $(extrema(A))"
+            @info "extrema of A $(extrema(A))"
             @info "using sat level $(params.sat_level)"
             @info "using low level $(params.low_level)"
             pr = TwoSetsFP(
@@ -304,7 +314,7 @@ function makeprproblem(input_params, preprocess_params, PRparams)
     elseif alg == "GSSatF"
         sat = A .< sqrt(params.sat_level)
         @info "making saturated set"
-        @info "extremsa of A $(extrema(A))"
+        @info "extrema of A $(extrema(A))"
         @info "using sat level $(params.sat_level)"
         A = A ./ N .* n
         A ./= params.sat_level
@@ -315,7 +325,7 @@ function makeprproblem(input_params, preprocess_params, PRparams)
     elseif alg == "GSSatP"
         sat = A .< sqrt(params.sat_level)
         @info "making saturated set"
-        @info "extremsa of A $(extrema(A))"
+        @info "extrema of A $(extrema(A))"
         @info "using sat level $(params.sat_level)"
         A = A ./ N .* n
         A ./= params.sat_level
@@ -326,7 +336,7 @@ function makeprproblem(input_params, preprocess_params, PRparams)
     elseif alg == "GSClipped"
         A = A ./ N .* n
         @info "making clipped set"
-        @info "extremsa of A $(extrema(A))"
+        @info "extrema of A $(extrema(A))"
         @info "using sat level $(params.sat_level)"
         @info "using low level $(params.low_level)"
         pr = TwoSetsFP(
