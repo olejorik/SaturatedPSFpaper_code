@@ -43,7 +43,7 @@ function preprocess(input_params, preprocess_params)
         crop = preprocess_params.crop
         processed = [
             psfimage[
-                (1 + crop[1][1]):(end - crop[1][2]), (1 + crop[2][1]):(end - crop[2][2])
+                (1+crop[1][1]):(end-crop[1][2]), (1+crop[2][1]):(end-crop[2][2])
             ] for psfimage in processed
         ]
         processed = [
@@ -54,15 +54,15 @@ function preprocess(input_params, preprocess_params)
         ]
     else
         cropsize = preprocess_params.finalsize * preprocess_params.downsample
-        c = round.(Int, centroid(hardthreshold(processed[1],0.2,true)))
+        c = round.(Int, centroid(hardthreshold(processed[1], 0.2, true)))
         processed = [
             PhaseRetrieval.binning(
                 PaddedView(
                     0,
                     psfimage,
                     (
-                        (c[1] - cropsize ÷ 2):(c[1] - cropsize ÷ 2 + cropsize - 1),
-                        (c[2] - cropsize ÷ 2):(c[2] - cropsize ÷ 2 + cropsize - 1),
+                        (c[1]-cropsize÷2):(c[1]-cropsize÷2+cropsize-1),
+                        (c[2]-cropsize÷2):(c[2]-cropsize÷2+cropsize-1),
                     ),
                 ),
                 preprocess_params.downsample,
@@ -110,7 +110,7 @@ function preprocesssingle(input_params, preprocess_params)
     if preprocess_params.finalsize == 0
         crop = preprocess_params.crop
         processed = processed[
-            (1 + crop[1][1]):(end - crop[1][2]), (1 + crop[2][1]):(end - crop[2][2])
+            (1+crop[1][1]):(end-crop[1][2]), (1+crop[2][1]):(end-crop[2][2])
         ]
         processed = PhaseRetrieval.binning(
             padarray(processed, Fill(0, preprocess_params.pad...)),
@@ -118,14 +118,14 @@ function preprocesssingle(input_params, preprocess_params)
         )
     else
         cropsize = preprocess_params.finalsize * preprocess_params.downsample
-        c = round.(Int, centroid(hardthreshold(processed,0.2,true)))
+        c = round.(Int, centroid(hardthreshold(processed, 0.2, true)))
         processed = PhaseRetrieval.binning(
             PaddedView(
                 0,
                 processed,
                 (
-                    (c[1] - cropsize ÷ 2):(c[1] - cropsize ÷ 2 + cropsize - 1),
-                    (c[2] - cropsize ÷ 2):(c[2] - cropsize ÷ 2 + cropsize - 1),
+                    (c[1]-cropsize÷2):(c[1]-cropsize÷2+cropsize-1),
+                    (c[2]-cropsize÷2):(c[2]-cropsize÷2+cropsize-1),
                 ),
             ),
             preprocess_params.downsample,
@@ -138,16 +138,16 @@ function preprocesssingle(input_params, preprocess_params)
     return processed, ap, mask
 end
 function hardthreshold!(a::AbstractArray, th)
-    a[a .<= th] .= 0
+    a[a.<=th] .= 0
     return a
 end
 
 function hardthreshold!(a::AbstractArray, th, relative::Bool)
     if relative
-        a[a .<= th * maximum(a)] .= 0
+        a[a.<=th*maximum(a)] .= 0
         return a
     else
-        return hardthreshold!(a,th)
+        return hardthreshold!(a, th)
     end
 end
 
@@ -581,7 +581,7 @@ function plot_resultsNoGT(
         vertical=true,
         flipaxis=false,
         limits=(-π, π),
-        ticks=((-π):(π / 2):π, ["-π", "-π/2", "0", "π/2", "π"]),
+        ticks=((-π):(π/2):π, ["-π", "-π/2", "0", "π/2", "π"]),
         colormap=:cyclic_mygbm_30_95_c78_n256,
     )
     cb.halign = :left
@@ -755,7 +755,7 @@ function loop(iter)
     return x
 end
 
-function read_sim_data(d::Dict; ext = "png")
+function read_sim_data(d::Dict; ext="png")
     @unpack config, phasetype, cropsim, sat, N, bpp = d
     crop = cropsim
     dload = @dict(config, phasetype, crop, sat, N, bpp)
@@ -770,7 +770,7 @@ function read_sim_data(d::Dict; ext = "png")
     return psfshortnname, psfimage, ap, phase
 end
 
-function read_exp_data(d::Dict, phasedir = phasedir)
+function read_exp_data(d::Dict, phasedir=phasedir)
     @unpack sat, psfnamefunc = d
 
     psfshortnname = psfnamefunc(sat)
@@ -788,3 +788,38 @@ sameval(dict, sel) = all([dict[key] == sel[key] for key in keys(sel)])
 filter_dict_list(dict, sel) = filter(d -> sameval(d, sel), dict)
 
 safediv(x, y) = (x ≈ 0 && y ≈ 0) ? 1.0 : x / y
+
+### Additions Nov'23. Refactoring to a simpler scripts
+
+function retrievePhaseRandomRuns2(
+    input_params,
+    preprocess_params, PRparams, runs=3,
+    callback=best_solution;
+    kwargs...
+)
+    allsols = [
+        begin
+            @info "\n\nProcessing $psfname, run #$i"
+            retrievePhasesingle(input_params, preprocess_params, PRparams; kwargs...)
+        end for i in 1:runs]
+
+    # for (i, s) in enumerate(allsols)
+    #     callback(i, s)
+    # end
+
+    # return first.(allsols), allsols[1][2:end]...
+
+    return callback(allsols)
+end
+
+function lastdist(sol::Tuple{Any,NamedTuple})
+    return get(disthist(sol),itersteps(sol), nothing)
+end
+
+function best_solution(allsols)
+    sols = first.(allsols)
+    distances = map(lastdist, sols)
+    bestsol = sols[argmin(distances)]
+    # restPhase = angle.(solution(bestsol))
+    return bestsol
+end
